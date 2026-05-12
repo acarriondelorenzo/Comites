@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Comités · Grupo Oberon</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap');
+:root {
+  --bg:#fafaf8;--surface:#ffffff;--surface2:#f5f4f0;--border:#e8e6e0;--border2:#d4d0c8;
+  --text:#1a1a18;--muted:#6b6860;--muted2:#9a9890;
+  --accent:#8b6914;--danger:#c0392b;--warn:#c0692b;--ok:#2d7a4f;--info:#2b5fc0;--purple:#5b3fc0;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.09),0 8px 32px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:400;min-height:100vh;overflow:hidden}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:13px 36px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow);position:relative;z-index:10}
+.topbar-title{font-family:'Instrument Serif',serif;font-size:19px;color:var(--accent);letter-spacing:.01em}
+.topbar-meta{display:flex;gap:24px;align-items:center}
+.meta-item{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.meta-num{font-family:'Instrument Serif',serif;font-size:17px;color:var(--text);line-height:1}
+.meta-label{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em}
+.layout{display:flex;height:calc(100vh - 55px)}
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+.nodes-layer{position:relative;width:100%;height:100%}
+
+/* NODE BASE */
+.node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:transform .18s ease;user-select:none}
+.node:hover{transform:translate(-50%,-50%) scale(1.07)}
+.node.active{transform:translate(-50%,-50%) scale(1.07)}
+.node-circle{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:var(--surface);border:1.5px solid var(--border2);box-shadow:var(--shadow);position:relative;transition:box-shadow .18s,border-color .18s}
+.node:hover .node-circle,.node.active .node-circle{box-shadow:var(--shadow-lg)}
+.node-label{font-family:'Instrument Serif',serif;text-align:center;line-height:1.15;color:var(--text)}
+.node-sub{font-size:9px;color:var(--muted2);text-align:center;font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.02em}
+.node-badge{position:absolute;top:-5px;right:-5px;color:white;border-radius:50%;width:19px;height:19px;font-size:9px;font-weight:500;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.node-center .node-circle{width:106px;height:106px;border-color:var(--accent);border-width:2px}
+.node-center .node-label{font-size:14px;color:var(--accent)}
+.node-company .node-circle{width:78px;height:78px}
+.node-company .node-label{font-size:11px}
+
+
+
+.hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted2);letter-spacing:.06em;pointer-events:none;text-transform:uppercase}
+
+/* PANEL */
+.panel{width:400px;min-width:400px;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease;box-shadow:-2px 0 12px rgba(0,0,0,.04)}
+.panel.closed{width:0;min-width:0;border-left:none;box-shadow:none}
+.panel-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;background:var(--surface2)}
+.panel-eyebrow{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.09em;margin-bottom:3px}
+.panel-title{font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);margin-bottom:6px}
+.panel-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500}
+.close-btn{position:absolute;top:14px;right:14px;background:var(--surface);border:1px solid var(--border2);color:var(--muted);cursor:pointer;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.close-btn:hover{background:var(--surface2);color:var(--text)}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);overflow-x:auto}
+.panel-tabs::-webkit-scrollbar{display:none}
+.panel-tab{flex-shrink:0;padding:10px 12px;font-size:10px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;font-weight:500}
+.panel-tab:hover{color:var(--text)}
+.panel-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.panel-body{flex:1;overflow-y:auto;padding:16px 18px 88px}
+.panel-body::-webkit-scrollbar{width:4px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* CONTENT STYLES */
+.resumen-text{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:14px}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tag{font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.tag.new{background:#faf6ee;color:var(--accent);border-color:#e8d9b8}
+.sec-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--muted2);margin:14px 0 9px}
+.sec-title:first-child{margin-top:0}
+.resumen-bullets{padding-left:14px;margin-top:4px}
+.resumen-bullets li{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:2px}
+.hot-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.hot-card.critico{border-left:3px solid var(--danger)}
+.hot-card.importante{border-left:3px solid var(--warn)}
+.hot-card.estrategico{border-left:3px solid var(--purple)}
+.hot-card.nuevo{border-left:3px solid var(--ok)}
+.ht-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.ht-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.35}
+.ht-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.task-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:flex-start;transition:opacity .15s}
+.task-item:last-child{border-bottom:none}
+.task-item.done{opacity:.45}
+.task-item.done .task-text{text-decoration:line-through}
+.task-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .15s;color:white}
+.task-item.done .task-check{background:var(--ok);border-color:var(--ok)}
+.task-prio{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.task-text{font-size:12px;line-height:1.45;color:var(--text)}
+.task-meta{font-size:10px;color:var(--muted2);margin-top:2px}
+.new-chip{display:inline-block;font-size:8px;padding:1px 5px;border-radius:4px;background:#faf6ee;color:var(--accent);border:1px solid #e8d9b8;margin-left:5px;vertical-align:middle;font-weight:500}
+.comite-block{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.comite-block.latest{border-color:var(--accent)}
+.comite-head{padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--surface2);transition:background .1s}
+.comite-head:hover{background:#eeece6}
+.comite-fecha{font-size:10px;color:var(--accent);font-weight:500}
+.comite-tit{font-size:12px;color:var(--text);margin-top:2px}
+.comite-arr{color:var(--muted2);font-size:11px;transition:transform .2s}
+.comite-arr.open{transform:rotate(90deg)}
+.comite-content{display:none;padding:12px 14px;border-top:1px solid var(--border)}
+.comite-content.open{display:block}
+.comite-content ul{padding-left:14px}
+.comite-content li{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:1px}
+.hot-li{font-size:11px;color:var(--danger);display:flex;gap:6px;margin-bottom:3px;line-height:1.4}
+.comite-hot{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.bloque-pill{display:inline-block;font-size:9px;padding:2px 8px;border-radius:5px;margin:7px 0 4px;font-weight:500}
+.risk-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;background:var(--surface2)}
+.risk-card.rc{border-left:3px solid var(--danger)}
+.risk-card.ra{border-left:3px solid var(--warn)}
+.risk-card.rm{border-left:3px solid var(--info)}
+.risk-nivel{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.risk-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px}
+.risk-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.coh-explain{background:#f0ede6;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.6}
+.coh-explain strong{color:var(--text)}
+.coh-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;background:var(--surface2)}
+.coh-head{display:flex;gap:7px;align-items:flex-start;margin-bottom:5px;flex-wrap:wrap}
+.coh-pill{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap;margin-top:1px}
+.coh-tit{font-size:12px;font-weight:500;color:var(--text);flex:1;line-height:1.35}
+.coh-desc{font-size:11px;color:var(--muted);line-height:1.55}
+hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
+
+/* CHAT */
+.chat-footer{border-top:1px solid var(--border);padding:12px 18px;background:var(--surface);position:absolute;bottom:0;left:0;right:0}
+.chat-label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.chat-resp{margin-bottom:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);line-height:1.65;max-height:160px;overflow-y:auto;display:none}
+.chat-resp.on{display:block}
+.chat-resp::-webkit-scrollbar{width:3px}
+.chat-resp::-webkit-scrollbar-thumb{background:var(--border2)}
+.chat-row{display:flex;gap:8px;align-items:flex-end}
+.chat-input{flex:1;border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'Inter',sans-serif;background:var(--surface2);color:var(--text);resize:none;min-height:36px;max-height:72px;outline:none;transition:border-color .15s}
+.chat-input:focus{border-color:var(--accent)}
+.chat-btn{background:var(--accent);border:none;border-radius:8px;color:white;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;transition:opacity .15s}
+.chat-btn:hover{opacity:.85}
+.chat-btn:disabled{opacity:.35;cursor:not-allowed}
+.dots{display:flex;gap:4px;align-items:center;padding:4px 0}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--muted2);animation:dp 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-title">Comités · Seguimiento Ejecutivo</div>
+  <div class="topbar-meta">
+    <div class="meta-item"><div class="meta-num">12</div><div class="meta-label">Comités</div></div>
+    <div class="meta-item"><div class="meta-num">6</div><div class="meta-label">Empresas</div></div>
+    <div class="meta-item"><div class="meta-num" id="pending-count">58</div><div class="meta-label">Tareas</div></div>
+    <div class="meta-item"><div class="meta-num" style="color:var(--danger)">6</div><div class="meta-label">Críticos</div></div>
+    <div class="meta-item"><div class="meta-num" style="color:var(--accent)">12 may</div><div class="meta-label">Actualizado</div></div>
+  </div>
+</div>
+<div class="layout">
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div class="nodes-layer" id="nodes-layer"></div>
+    <div class="hint" id="hint">Pincha una empresa para explorar</div>
+  </div>
+  <div class="panel closed" id="panel">
+    <div class="panel-header" id="panel-header">
+      <button class="close-btn" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-tabs">
+      <div class="panel-tab active" data-tab="resumen">Resumen</div>
+      <div class="panel-tab" data-tab="hot">Hot Topics</div>
+      <div class="panel-tab" data-tab="tareas">Tareas</div>
+      <div class="panel-tab" data-tab="comites">Comités</div>
+      <div class="panel-tab" data-tab="riesgos">Riesgos</div>
+      <div class="panel-tab" data-tab="coherencia">Coherencia</div>
+    </div>
+    <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="panel-body" id="panel-body"></div>
+      <div class="chat-footer">
+        <div class="chat-label">Pregunta sobre esta empresa</div>
+        <div class="chat-resp" id="chat-resp"></div>
+        <div class="chat-row">
+          <textarea class="chat-input" id="chat-input" placeholder="¿Qué debería hacer esta semana? ¿Cuál es el mayor riesgo?..." rows="1" onkeydown="handleKey(event)"></textarea>
+          <button class="chat-btn" id="chat-btn" onclick="sendChat()">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA={
+  cev:{
+    name:"CEV",sub:"Grupo matriz",color:"#7c6fa0",
+    lastComite:"05 may 2026",numComites:1,
+    status:"Matriz",statusColor:"#7c6fa0",
+    resumen:"Holding con 94% de NCE y 50% de Oberon. Tres vectores críticos simultáneos: caja y cobros en NCE (~244k€ pendientes), conversión comercial en Optimize e Italia (~150k€ sin retorno), y dependencia de Álvaro en trading. Pipeline fuerte en México (500–600MW) y autoconsumo.",
+    tags:["NCE cobros","Optimize Italia","México 500MW","IA grupo","Dependencia Álvaro"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico",titulo:"Caja NCE al límite",desc:"~244k€ pendientes de cobro. Recurrent (68k€ vencidos) + NEC, CIP, Matrix, SX. Línea crédito 150k€ aguanta este mes pero el siguiente mes es incierto si no entran cobros."},
+      {tipo:"critico",label:"Crítico",titulo:"Italia Optimize: inversión sin retorno",desc:"~150k€ invertidos, solo ~15k€ de ingresos. Pipeline no se convierte en ventas. Exigir plan de ventas con KPIs duros (reuniones, ofertas, conversión) con fecha límite."},
+      {tipo:"importante",label:"Importante",titulo:"Dependencia de Álvaro en trading",desc:"Imprescindible operativamente pero con comportamientos poco profesionales. Riesgo organizativo real a corto plazo. Solución en marcha: automatización y diversificación de operativa."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"México: 500–600MW en juego",desc:"Izamal + Aticul (~250MW maduros) con respuesta CENACE el 22 mayo. Total potencial 500–600MW. Estrategia: venta as is a ~30–35k€/MW con retención del 25% → ~1.2–1.5M€ netos potenciales."},
+      {tipo:"importante",label:"Importante",titulo:"Zenda: 2 semanas o se pierde tracción",desc:"Plataforma retrasada con clientes interesados (Olana y Oberon). Objetivo: versión funcional en 2 semanas. Urgencia: empezar a facturar ya."},
+    ],
+    comites:[{f:"05 may 2026",t:"Comité CEV",bloques:[
+      {l:"NCE",lc:"#dbeafe",ltc:"#1e40af",ps:["~244k€ pendientes cobro; Recurrent ~68k€ vencidos","Línea crédito 150k€: aguanta este mes, siguiente en riesgo","Factura Enertrag ~82–85k€ pendiente de emitir","Incidencia Red Eléctrica/Galileo: retraso ~1 mes por correo no gestionado","Zenda: objetivo 2 semanas; Olana y Oberon interesados","México: ~250MW maduros, respuesta CENACE 22 mayo","Autoconsumo México: SPV con Hamacker (NCE retiene ~20%)"],hs:["Cobros: mes siguiente crítico","CENACE México: respuesta 22 mayo","Zenda: 2 semanas o se pierde tracción"]},
+      {l:"Optimize",lc:"#fef3c7",ltc:"#92400e",ps:["~40% caja consumida desde diciembre; ~140k€ facturas vencidas","Italia: ~150k€ invertidos, solo ~15k€ ingresos","Decisión: exigir plan ventas con KPIs duros","Vector Cuatro: exploración partnership (no venta)","CTG Suecia: Optimize + Oberon al 50%; esquema bonus pendiente"],hs:["Italia: plan de ventas con KPIs esta semana","140k€ vencidos — revisar caso a caso"]},
+      {l:"Oberon",lc:"#ede9fe",ltc:"#5b21b6",ps:["Trading muy activo: ejemplo 50M€ operados en un día","Dependencia extrema de Álvaro — imprescindible pero comportamientos poco profesionales","Solución: automatización + diversificación operativa","Storeon: presentado a CNMV, pipeline en marcha"],hs:["Dependencia Álvaro: riesgo organizativo real","No abrir más frentes sin cerrar los actuales"]}
+    ]}],
+    tareas:[
+      {t:"Gestionar cobros NCE: Recurrent 68k€, NEC, CIP, Matrix, SX",pr:"alta"},
+      {t:"Emitir factura Enertrag ~82–85k€ tras completar hito",pr:"alta"},
+      {t:"Seguimiento respuesta CENACE México el 22 mayo",pr:"alta"},
+      {t:"Sacar versión funcional de Zenda en 2 semanas",pr:"alta"},
+      {t:"Exigir a Optimize plan ventas Italia con KPIs duros y fecha",pr:"alta"},
+      {t:"Preparar escenarios de caja Optimize: optimista, medio y estrés",pr:"alta"},
+      {t:"Revisar facturas vencidas Optimize ~140k€ caso a caso",pr:"alta"},
+      {t:"Reducir dependencia de Álvaro: automatización y diversificación",pr:"alta"},
+      {t:"Definir proceso baterías NCE: detección → validación → presentación mismo día",pr:"alta"},
+      {t:"Definir esquema global de bonus para traders",pr:"media"},
+      {t:"Definir alcance partnership Vector Cuatro",pr:"media"},
+    ],
+    riesgos:[
+      {nivel:"rc",nlabel:"Crítico",t:"Caja NCE: ~244k€ pendientes de cobro",d:"68k€ vencidos Recurrent + NEC, CIP, Matrix, SX. Línea crédito 150k€ aguanta este mes. Siguiente mes en riesgo."},
+      {nivel:"ra",nlabel:"Alto",t:"Italia Optimize: ~150k€ invertidos sin retorno",d:"Solo ~15k€ de ingresos. Pipeline no se convierte en ventas. Exigir plan con KPIs duros esta semana."},
+      {nivel:"ra",nlabel:"Alto",t:"Dependencia extrema de Álvaro en trading",d:"Imprescindible pero comportamientos poco profesionales. Alta rentabilidad, baja estabilidad organizativa."},
+      {nivel:"rm",nlabel:"Medio",t:"Zenda: retraso con clientes esperando",d:"Olana y Oberon interesados. Objetivo 2 semanas. Sin entrega → pérdida de tracción comercial."},
+    ],
+    coherencia:[
+      {tag:"Sin cerrar",tc:"#fee2e2",tct:"#991b1b",t:"Cobros NCE: sin entradas confirmadas",d:"Sistema automático activado (CEV 5 may). Sin evolución registrada en comités posteriores."},
+      {tag:"Vigilar",tc:"#eff6ff",tct:"#1d4ed8",t:"Optimize Italia: plan de ventas con KPIs",d:"Identificado en CEV 5 may. Sin seguimiento posterior. Próximo comité debe mostrar plan concreto con fechas."},
+      {tag:"Vigilar",tc:"#eff6ff",tct:"#1d4ed8",t:"IA / automatización a nivel grupo",d:"Mencionado en CEV y Oberon. Contactar con Álvaro para perfil part-time Head of AI. Sin avance concreto."},
+    ]
+  },
+  oberon:{
+    name:"Oberon",sub:"Inversión & proyectos",color:"#b45309",
+    lastComite:"12 may 2026",numComites:5,
+    status:"En curso",statusColor:"#b45309",
+    resumen:"Comité del 12 mayo: Stoneweg/Teras se reúnen el lunes. Pipeline 100MW para Maze como punto crítico (José Ramón + Pierre). Dashboard global identificado como necesidad prioritaria. Fundraising rolling Maze con primer cierre junio/julio. MiniStoreon: foco en Pontevedra (deadline DIA 22 junio), Girona descartado.",
+    tags:["Stoneweg lunes","100MW pipeline","Pontevedra 22jun","Abel sep","Maze fundraising","12 may ★"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico · Nuevo",titulo:"Pipeline 100MW Maze: oferta a José Ramón esta semana",desc:"No basta con que José Ramón entre en Maze — debe aportar efectivamente los 100MW. Oferta pendiente: 0,6€/MWh + 50/50 upside. Pierre como alternativa con portfolio de ~150MW (plantas 10/20/40MW)."},
+      {tipo:"critico",label:"Crítico · Nuevo",titulo:"Deadline DIA Pontevedra: 22 junio",desc:"El proyecto más sólido de MiniStoreon (4,5MW): publicado a información pública desde abril, menos afecciones, menor coste de conexión. Girona descartado (sin DIA + cambio de potencia 5→5,04MW). Análisis urgente."},
+      {tipo:"nuevo",label:"Nuevo",titulo:"Reunión Stoneweg/Teras el lunes",desc:"Correo con estructura societaria enviado. Stoneweg sigue interesado en combinación AssetCo/OpCo. Si no levantan capital para vehículo principal, podrían apoyar en Maze o MiniStoreon 2.0 bajo control de Oberon."},
+      {tipo:"importante",label:"Importante",titulo:"Quantra: ~1M€ capital externo necesario",desc:"Además de las aportaciones de socios, se necesita ~1M€ capital externo este año. Hablar con Nacho para compromiso de 2 años (primer desembolso parcial). Evento Energy&Beers el 21 mayo."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Fundraising rolling Maze: primer cierre junio/julio",desc:"Lista de ~12 potenciales inversores. Jordi y Francesc han indicado tickets de 100–150k€ cada uno como ancla. Segundo cierre en septiembre sin prima relevante entre ambos cierres."},
+    ],
+    comites:[
+      {f:"12 may 2026",t:"Comité Oberon",isNew:true,ps:["Stoneweg/Teras: correo con estructura enviado; reunión el lunes siguiente","Si no levantan capital para vehículo principal → podrían apoyar en Maze o MiniStoreon 2.0","Maze pipeline crítico: asegurar 100MW efectivos de José Ramón, no solo su entrada","José Ramón/SCJ: listado de plantas enviado — pendiente oferta (0,6€/MWh + 50/50 upside)","Pierre: portfolio ~150MW; planta 5MW para prueba técnica de agosto","Prueba 5MW: necesaria para agosto — enviar a Pierre requisitos técnicos","Dashboard global Oberon: necesidad prioritaria identificada","Primera persona operativa Maze en junio: back office, soporte mercado","Abel: incorporación septiembre — Rodri y Germán preparan oferta (~100k€ fijo + hasta 100k€ bonus)","Fundraising rolling Maze: primer cierre junio/julio, segundo septiembre","Potenciales: Jordi y Francesc (100–150k€ c/u), Fernando Rueda, Fabio, Ciro, Pierre, Luis Selva, Paco Solchaga, Ismael Guerrero, Carlos Torres Quevedo, Rubén Clavijo, Luis Martínez, Alter5","MiniStoreon Girona: descartado — sin DIA, cambio 5→5,04MW obliga nuevos trámites","Pontevedra (4,5MW): mucho mejor — deadline DIA 22 junio 2026","ePower/Deep Power: interés en seguir — alternativas: especie, earn-out, participación SPVs, ampliar fondo","Hablar con Proaltus (José María) para validar estructuras ePower","Quantra: ~1M€ capital externo adicional necesario este año — hablar con Nacho"],hs:["Reunión Stoneweg/Teras el lunes — preparar posición","Cerrar oferta a José Ramón (100MW) esta semana","Deadline DIA Pontevedra: 22 junio — análisis urgente","Quantra: hablar con Nacho ya"]},
+      {f:"07 may 2026",t:"Comité Oberon",ps:["DECISIÓN: línea única avales sin lombardo — todos invierten juntos en todas las operaciones","Capital Quantra: 1.5M–2M€ para 2026–2028; arranque con socios (~200–300k€)","Hablar con Nacho (semana siguiente) y Latras (vía Vicente)","Fundraising: producto a producto, NO bundle","Maze: foco en Teras (~1–1.5M€) + inversores tácticos","First Light: vía socios Tradergy, tickets ~40–50k€, cierre rápido posible","Mini Storeon: lista ~70 inversores — activar ya","Propuesta Mikel: opción de compra con precio base julio + ~5k€/MW/mes por 3–6 meses","Evento Energy&Beers Quantra: 21 mayo","Cobra: avanzando como cliente relevante"],hs:["Contactar Nacho y Latras esta semana","Preparar doc producto Quantra para 21 mayo"]},
+      {f:"05 may 2026",t:"Comité Oberon",ps:["Folleto Mini Storeon enviado por Proaltus — respuesta CNMV 3 sem a 2 meses","Proyectos ePower: buenos fundamentales, plazos optimistas, riesgos tramitación","Maxi Storeon: pedir extensión a Price hasta mediados de junio","Maze/Teras: head of terms a Paco; estructura 2-1 en consejo"],hs:["Financiación 400k€ antes 25 julio para ePower"]},
+      {f:"30 abr 2026",t:"Comité Oberon",ps:["Deutsche Bank: llamar a Jesús — sin línea no hay escala","Pipeline: Everwood (3 SPVs Japón), Cobra 150MW","MOU Teras: 1.5M€, More Than Welcome, rol 100% financiero"],hs:["Deutsche Bank = cuello de botella nº1"]},
+      {f:"28 abr 2026",t:"Comité Oberon",ps:["Quantra: operación 108k€ al 16% aprobada","Pendiente consulta fiscal con Belén: retenciones, IVA","RRHH: perfil polivalente para Maze, objetivo 1 junio"],hs:["Fiscalidad Quantra pendiente con Belén"]}
+    ],
+    tareas:[
+      {t:"Cerrar oferta a José Ramón: 100MW Maze (0,6€/MWh + 50/50 upside)",pr:"alta",isNew:true},
+      {t:"Enviar a Pierre requisitos técnicos para prueba 5MW (necesaria agosto)",pr:"alta",isNew:true},
+      {t:"Preparar posición para reunión Stoneweg/Teras el lunes",pr:"alta",isNew:true},
+      {t:"Hablar con Nacho: compromiso Quantra 2 años, primer desembolso parcial",pr:"alta",isNew:true},
+      {t:"Analizar Pontevedra con urgencia — deadline DIA 22 junio",pr:"alta",isNew:true},
+      {t:"Hablar con Proaltus (José María) sobre estructuras ePower / Deep Power",pr:"alta",isNew:true},
+      {t:"Rodri y Germán: preparar oferta para Abel (~100k€ fijo + hasta 100k€ bonus)",pr:"alta",isNew:true},
+      {t:"Arrancar primera contratación operativa Maze (junio)",pr:"alta",isNew:true},
+      {t:"Ordenar fundraising Maze: lista de inversores + primer cierre junio/julio",pr:"alta",isNew:true},
+      {t:"Activar fundraising Mini Storeon: priorizar ~70 inversores",pr:"alta"},
+      {t:"Preparar slides para evento Energy&Beers el 21 mayo",pr:"alta"},
+      {t:"Validar estructura línea avales con Jesús (Deutsche Bank)",pr:"alta"},
+      {t:"Cerrar operación Quantra 108k€ al 16%",pr:"alta"},
+      {t:"Consultar con Belén fiscalidad e IVA Quantra",pr:"alta"},
+      {t:"Pedir a Price extensión de plazo hasta mediados de junio",pr:"media"},
+      {t:"Pedir a Girona aclaraciones duras sobre DIA y cambio de potencia",pr:"media",isNew:true},
+    ],
+    riesgos:[
+      {nivel:"rc",nlabel:"Crítico",t:"Pipeline 100MW Maze: sin asegurar",d:"José Ramón debe aportar efectivamente los 100MW. Pierre como alternativa. Oferta esta semana o se pierde momentum."},
+      {nivel:"rc",nlabel:"Crítico",t:"Deadline DIA Pontevedra: 22 junio",d:"El proyecto más sólido de MiniStoreon. Análisis urgente para no perder la ventana. Girona descartado."},
+      {nivel:"rc",nlabel:"Crítico",t:"Riesgo levantar fondo parcialmente sin ejecutar CAPEX",d:"Primera operación con riesgo alto. No comprometer CAPEX sin capital suficiente levantado."},
+      {nivel:"ra",nlabel:"Alto",t:"Deutsche Bank: línea avales pendiente validación final",d:"Decisión tomada (línea única sin lombardo). Pendiente llamar a Jesús para validar estructura."},
+      {nivel:"ra",nlabel:"Alto",t:"Sobrecarga equipo Oberon",d:"Maze + Storeon + Maxi Storeon + Quantra simultáneos. Contrataciones en proceso pero aún sin cubrir."},
+    ],
+    coherencia:[
+      {tag:"Resuelto",tc:"#dcfce7",tct:"#166534",t:"Línea avales: decisión tomada (7 may)",d:"Línea única sin lombardo decidida. Pendiente validación final con Jesús (Deutsche Bank)."},
+      {tag:"Avanza",tc:"#dcfce7",tct:"#166534",t:"Teras/Stoneweg: de MOU a reunión formal",d:"Correo con estructura enviado. Reunión el lunes. Progresión coherente desde 28 abr."},
+      {tag:"Nuevo ★",tc:"#fef9ee",tct:"#92400e",t:"Pipeline 100MW: nuevo punto crítico (12 may)",d:"Primer registro. José Ramón + Pierre como dos vías. Oferta esta semana."},
+      {tag:"Nuevo ★",tc:"#fef9ee",tct:"#92400e",t:"Fundraising rolling Maze: primer cierre junio/julio",d:"Nuevo en 12 may. ~12 potenciales. Jordi y Francesc como primeros compromisos indicativos."},
+      {tag:"Sin cerrar",tc:"#fee2e2",tct:"#991b1b",t:"Quantra: fiscalidad con Belén — 5 comités sin resolver",d:"Pendiente desde 28 abr. El cierre de la operación 108k€ depende en parte de esto."},
+      {tag:"Escala",tc:"#fef3c7",tct:"#92400e",t:"MiniStoreon: Girona descartado, foco en Pontevedra",d:"Cambio relevante respecto a comités anteriores. Deadline DIA Pontevedra 22 junio exige urgencia."},
+    ]
+  },
+  tradergy:{
+    name:"Tradergy / Halley / FL",sub:"Trading & energy",color:"#166534",
+    lastComite:"07 may 2026",numComites:3,
+    status:"Avanzando",statusColor:"#166534",
+    resumen:"Robot en producción plena desde semana del 7 mayo. Jamie confirmado el 15 junio. Capital UK debe escalar a 1.5M€+ (600k€ insuficiente estructuralmente). Halley en tendencia ascendente con objetivo ~1M€ en 2026. Límite OTR EPEX como cuello de botella técnico sobre el PnL.",
+    tags:["Robot EPEX pleno","Jamie 15 jun","Capital 1.5M€+","OTR límite","Pau+Rodrigo sep"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico",titulo:"Capital UK insuficiente: 600k€ no viable",desc:"Consenso en comité del 7 mayo: 600k€ no es viable estructuralmente. La estructura de costes exige volumen. Objetivo: escalar a 1.5M€+ (potencial hasta 3M€). First Light necesita garantías ~180–220k€ antes de verano."},
+      {tipo:"critico",label:"Crítico",titulo:"Límite OTR EPEX: constraint sobre PnL",desc:"Reducción drástica de ~200 a ~40–50 movimientos por ambigüedad normativa. Impacto directo sobre el PnL. Estrategia: filtrar operaciones de bajo valor y mantener perfil bajo."},
+      {tipo:"nuevo",label:"Resuelto",titulo:"Jamie UK: entrada confirmada el 15 junio",desc:"Tras varios comités pendiente, el 7 mayo se confirma la entrada el 15 junio. Onboarding listo, solo falta firmar el contrato. Semana completa en Madrid al inicio."},
+      {tipo:"importante",label:"Importante",titulo:"Pau Vives + Rodrigo Lara: septiembre",desc:"Incorporación el 1 de septiembre confirmada. Debate no resuelto sobre si escalonar (stagger) para reducir riesgo de gestión. Infraestructura bancaria (Hamburgo) en proceso."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Halley: objetivo ~1M€ en 2026",desc:"Semana muy positiva con lunes de ~50k€. Media ~3k€/día o más. Objetivo: superar los 500k€ de 2025 con aspiración a ~1M€ si el mercado acompaña. Posible reparto adicional de dividendos de ~100k€."},
+    ],
+    comites:[
+      {f:"07 may 2026",t:"Comité Trading",ps:["Robot en producción plena — desvinculación definitiva de Powerbot","Limitación OTR/EPEX: reducción de ~200 a ~40–50 movimientos — constraint sobre PnL","Jamie (UK): entrada confirmada el 15 junio; onboarding listo, solo falta contrato","Pau Vives + Rodrigo Lara: entrada 1 septiembre; debate stagger no resuelto","CONSENSO: 600k€ insuficiente — escalar a 1.5M€+ (potencial hasta 3M€)","FL necesita garantías: ~180–220k€ antes de verano (junio–julio)","Performance Halley: lunes ~50k€; tendencia ascendente ~3k€/día","Objetivo 2026: superar 500k€, aspiración ~1M€ si mercado acompaña","Posible reparto adicional dividendos Halley: ~100k€","Robot Italia: muy avanzado, cerca del estado objetivo"],hs:["Capital UK: decidir cuándo y cómo escalar a 1.5M€+","FL garantías: ~180–220k€ antes de verano — definir estructura"]},
+      {f:"30 abr 2026",t:"Comité Tradergy",ps:["UK (Jamie): EOR prácticamente cerrado, 100k£ + 10% PnL","Holanda, Dinamarca y Madrid (Rodrigo): septiembre","Robot habilitado, entrada en producción","CTG: nueva operativa desde 1 mayo; IA como línea estratégica"],hs:["Jamie: confirmar incorporación"]},
+      {f:"23 abr 2026",t:"Comité Tradergy / Halley",ps:["Jamie UK: entrevista 1h, muy buena impresión","Pau Vives (Holanda): muy buena valoración","Rodrigo Lara (Dinamarca): segunda entrevista, intención de oferta","Capital First Light UK: ~250k€ primer despliegue; posible 1–2M€ a medio plazo","Mercado español: ~5% de todas las ofertas gestionadas"],hs:["Definir estructura financiación UK a medio plazo"]}
+    ],
+    tareas:[
+      {t:"Firmar contrato Jamie y confirmar entrada el 15 junio",pr:"alta"},
+      {t:"Decidir estructura financiación FL: garantías ~180–220k€ antes de verano",pr:"alta"},
+      {t:"Definir plan escalado capital UK a 1.5M€+",pr:"alta"},
+      {t:"Optimizar robot para operar dentro del límite OTR EPEX (~40–50 movimientos)",pr:"alta"},
+      {t:"Resolver debate stagger Pau Vives + Rodrigo Lara (septiembre)",pr:"media"},
+      {t:"Cerrar cuenta bancaria Hamburgo + setup técnico septiembre",pr:"media"},
+      {t:"Decidir sobre posible reparto dividendos Halley ~100k€",pr:"media"},
+    ],
+    riesgos:[
+      {nivel:"rc",nlabel:"Crítico",t:"Capital UK insuficiente: 600k€ no viable estructuralmente",d:"Consenso 7 may: escalar a 1.5M€+ (potencial 3M€). FL necesita garantías ~180–220k€ antes de verano."},
+      {nivel:"rc",nlabel:"Crítico",t:"Límite OTR EPEX: cuello de botella técnico sobre PnL",d:"Reducción de ~200 a ~40–50 movimientos. Filtrar operaciones de bajo valor. Mantener perfil bajo."},
+      {nivel:"rm",nlabel:"Medio",t:"Onboarding simultáneo Pau + Rodrigo en septiembre",d:"Debate stagger no resuelto. Riesgo de gestión y doble curva de aprendizaje."},
+    ],
+    coherencia:[
+      {tag:"Resuelto",tc:"#dcfce7",tct:"#166534",t:"Jamie UK: fecha de entrada confirmada",d:"El 7 may se confirma el 15 junio. Solo falta contrato. Progresión: 23 abr entrevista → 30 abr EOR cerrado → 7 may fecha confirmada."},
+      {tag:"Resuelto",tc:"#dcfce7",tct:"#166534",t:"Robot trading: en producción plena",d:"23 abr: candidatos. 30 abr: habilitado. 7 may: producción plena con desvinculación de Powerbot."},
+      {tag:"Escala",tc:"#fee2e2",tct:"#991b1b",t:"Capital UK: de '600k€ suficiente' a 'insuficiente estructuralmente'",d:"Cambio de criterio importante el 7 may. Hay que decidir cuándo y cómo levantar capital adicional para FL."},
+    ]
+  },
+  medren:{
+    name:"MedREN",sub:"Energías renovables fondo",color:"#991b1b",
+    lastComite:"05 may 2026",numComites:2,
+    status:"URGENTE",statusColor:"#991b1b",
+    resumen:"Dos hitos críticos con fecha: firmar Embassy antes del 31 mayo (quedan menos de 20 días) y asegurar 50k€ antes del 30 junio para cumplir recursos propios CNMV. Caja ~70k€ muy tensionada. Abogados Luxemburgo deben responder esta semana sin excusa.",
+    tags:["Embassy 31 mayo","CNMV 30 junio","Caja 70k€","Marwa Dubai","< 20 días"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico · menos de 20 días",titulo:"Firmar Embassy antes del 31 de mayo",desc:"Si no se firma el acuerdo esta semana, los 50k€ comprometidos por Embassy no pueden entrar antes del 30 de junio, incumpliendo los recursos propios exigidos por CNMV. Amenazar con cambio a Eversheds/Manuel López si los abogados no hacen delivery ya."},
+      {tipo:"critico",label:"Crítico",titulo:"Caja MedREN: ~70k€ al límite",desc:"Gastos mensuales ~8k€. Plan de contención activo: salarios al 50%, gastos congelados, facturas diferidas a julio. Todo el escenario depende de los 50k€ de Embassy antes del 30 de junio."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Embassy como palanca principal",desc:"Más allá del capital inicial (50k€), Embassy aporta nombre, relaciones y acceso a Middle East. Marwa se instala en Dubái — el cara a cara es clave en esa región para acceder a family offices y bancos privados árabes."},
+      {tipo:"importante",label:"Importante",titulo:"EIB/EIF: solicitud enviada",desc:"Proceso largo (~7 meses) pero si avanza en paralelo con Embassy puede dar visibilidad adicional antes de final de año. Complementa la estrategia de fundraising institucional."},
+      {tipo:"importante",label:"Vigilar",titulo:"Pipeline de inversión: no es el problema",desc:"+350–400MW nuevos incorporados en el último mes. El mercado tiene proyectos. El cuello de botella es el fundraising y la estructura, no la falta de oportunidades de inversión."},
+    ],
+    comites:[
+      {f:"05 may 2026",t:"Reunión MedREN",ps:["Embassy: en abogados Luxemburgo — firma antes 30/31 mayo","50k€ Embassy deben entrar antes del 30 junio (dentro de 15 días tras firma)","Amenazar con cambio a Eversheds/Manuel López si abogados no aceleran","Marwa se va a vivir a Dubái: positivo para Middle East","Caja ~70k€: salarios 50%, congelar gastos, diferir facturas a julio","Pipeline: +350–400MW nuevos en último mes — no es el cuello de botella","EIB/EIF: solicitud enviada, proceso ~7 meses","Vision Ridge: posible operating partner en España, interesante a futuro"],hs:["Firma Embassy antes 31 mayo = hito absoluto","Caja 30 junio = match point CNMV","Abogados Luxemburgo deben responder esta semana"]},
+      {f:"28 abr 2026",t:"Comité MedREN",ps:["Viaje Londres: Embassy (feeling y encaje) + Vision Ridge","Jeweller Agreement en abogados Luxemburgo","~50 placement agents contactados, ~10–12 conversaciones reales","Garrett (Climate Change Capital): placement agent más interesante","Oberon baterías: operating partner sin levantar fondo — 200–300M€ objetivo"],hs:["Prioridad absoluta: cerrar financiación antes de junio"]}
+    ],
+    tareas:[
+      {t:"Exigir a abogados Luxemburgo respuesta inmediata al acuerdo Embassy",pr:"alta"},
+      {t:"Firmar acuerdo Embassy antes del 30/31 de mayo",pr:"alta"},
+      {t:"Asegurar entrada 50k€ Embassy antes del 30 de junio",pr:"alta"},
+      {t:"Preparar carta a CNMV sobre recursos propios y periodificación",pr:"alta"},
+      {t:"Congelar gastos no esenciales y diferir pagos a julio",pr:"alta"},
+      {t:"Mantener actividad comercial Embassy / Middle East con Marwa",pr:"media"},
+      {t:"Explorar Julio, Altium y San Company como catalizadores fundraising",pr:"baja"},
+    ],
+    riesgos:[
+      {nivel:"rc",nlabel:"Crítico",t:"Firma Embassy antes del 31 mayo — menos de 20 días",d:"Si no se firma, los 50k€ no entran antes del 30 junio y MedREN incumple recursos propios CNMV."},
+      {nivel:"rc",nlabel:"Crítico",t:"Caja MedREN (~70k€) al límite",d:"Gastos ~8k€/mes. Plan de contención activo. Todo depende de Embassy."},
+    ],
+    coherencia:[
+      {tag:"Crítico",tc:"#fee2e2",tct:"#991b1b",t:"Menos de 20 días para el hito del 31 mayo",d:"Sin nuevo comité MedREN desde el 5 mayo. Verificar estado de los abogados de Luxemburgo esta semana."},
+      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Embassy: de viaje a Londres a firma inminente",d:"28 abr: viaje y reunión. 5 may: objetivo firma 31 mayo, 50k€ antes 30 junio. Urgencia escalada."},
+    ]
+  },
+  maze:{
+    name:"Maze",sub:"Representación energética",color:"#1d4ed8",
+    lastComite:"12 may 2026",numComites:4,
+    status:"En construcción",statusColor:"#1d4ed8",
+    resumen:"Punto crítico del 12 mayo: asegurar pipeline de 100MW (José Ramón + Pierre). Fundraising rolling con primer cierre junio/julio (~12 potenciales). Abel como contratación estructural desde septiembre. Primera persona operativa en junio. Reunión Stoneweg/Teras el lunes.",
+    tags:["100MW pipeline","Fundraising jun/jul","Abel sep","Pierre alternativa","Stoneweg lunes","12 may ★"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico · Nuevo",titulo:"100MW pipeline: oferta a José Ramón esta semana",desc:"La viabilidad operativa de Maze depende de un portfolio significativo. José Ramón/SCJ ya envió listado de plantas habilitadas — hay que enviarle la oferta ya (base 0,6€/MWh + 50/50 sobre upside). Pierre es la alternativa con portfolio de ~150MW."},
+      {tipo:"nuevo",label:"Nuevo",titulo:"Fundraising rolling: primer cierre junio/julio",desc:"Lista de ~12 potenciales inversores. Jordi y Francesc han indicado tickets de 100–150k€ cada uno como ancla inicial. Segundo cierre en septiembre sin prima relevante entre ambos cierres."},
+      {tipo:"importante",label:"Importante",titulo:"Contrataciones: primer perfil en junio, Abel en septiembre",desc:"Primera persona operativa en junio para back office y soporte de mercado. Abel como figura estructural desde septiembre: Rodri y Germán preparan oferta con ~100k€ fijo y hasta 100k€ de bonus."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Stoneweg/Teras: reunión el lunes",desc:"Si Stoneweg no puede levantar capital para el vehículo principal, podría apoyar en Maze directamente o en un MiniStoreon 2.0 bajo control de Oberon. Reunión clave para definir su rol real."},
+      {tipo:"importante",label:"Vigilar",titulo:"CECO: 5 comités sin cierre",desc:"Necesario antes de operar activos reales. Pierre ofrece planta de 5MW como alternativa para la prueba técnica de habilitación (necesaria para agosto). CECO con Green Eagle sigue sin formalizarse."},
+    ],
+    comites:[
+      {f:"12 may 2026",t:"Maze (en Comité Oberon)",isNew:true,ps:["Pipeline crítico: 100MW — José Ramón debe aportar efectivamente, no solo entrar","José Ramón/SCJ: oferta pendiente — base 0,6€/MWh + 50/50 sobre upside","Pierre: ~150MW portfolio; planta 5MW para prueba técnica de agosto","Fundraising rolling: primer cierre junio/julio, segundo septiembre","Potenciales: Jordi (100–150k€), Francesc (100–150k€), Fernando Rueda, Fabio, Ciro, Pierre, Luis Selva, Paco Solchaga, Ismael Guerrero, Carlos Torres Quevedo, Rubén Clavijo, Luis Martínez, Alter5","Primera persona operativa en junio (back office, soporte mercado)","Abel: oferta estructural para septiembre (~100k€ fijo + hasta 100k€ bonus)"],hs:["Cerrar oferta a José Ramón esta semana","Primer cierre fundraising: junio/julio"]},
+      {f:"07 may 2026",t:"Maze (en Comité Oberon)",ps:["Foco total en Teras: cerrar ticket ~1–1.5M€","First Light: vía socios Tradergy (~5%), tickets ~40–50k€","Estrategia: producto a producto, no bundle","Testar con Pablo (Teras): More Than Welcome o HoldCo"],hs:["Testar estructura con Teras vía Pablo esta semana"]},
+      {f:"05 may 2026",t:"Maze (en Comité Oberon)",ps:["Reunión con Paco: pactos socios More Than Welcome y HoldCo","Esquema 2-1 en consejo (Oberon/Teras)","Contrato Oberon-HoldCo: 3 años, punto sensible para inversores"],hs:["Contrato Oberon-HoldCo: riesgo percepción fuga de valor"]},
+      {f:"28 abr 2026",t:"Maze (en Comité Oberon)",ps:["Estructura: Maze Holding + Maze España + Modern Welcome","CECO necesario — avanzar con Green Eagle","Planta 5MW: contactar José Ramón / SCJ","RRHH: perfil técnico-comercial, objetivo 1 junio"],hs:["Perfil Maze: arrancar búsqueda ya","CECO: habilitar antes de operar activos"]}
+    ],
+    tareas:[
+      {t:"Cerrar oferta a José Ramón: 100MW (0,6€/MWh + 50/50 upside)",pr:"alta",isNew:true},
+      {t:"Enviar a Pierre requisitos técnicos para prueba 5MW (necesaria agosto)",pr:"alta",isNew:true},
+      {t:"Rodri y Germán: preparar oferta para Abel (~100k€ fijo + hasta 100k€ bonus)",pr:"alta",isNew:true},
+      {t:"Arrancar primera contratación operativa Maze (junio)",pr:"alta",isNew:true},
+      {t:"Ordenar lista inversores Maze y lanzar fundraising rolling",pr:"alta",isNew:true},
+      {t:"Testar con Teras (Pablo): More Than Welcome o HoldCo",pr:"alta"},
+      {t:"Cerrar MOU Teras: inversión 1.5M€",pr:"alta"},
+      {t:"Avanzar con Green Eagle en habilitación CECO",pr:"media"},
+      {t:"Solicitar a Paco head of terms pactos de socios",pr:"media"},
+      {t:"Preparar contrato de servicios Oberon-HoldCo",pr:"media"},
+    ],
+    riesgos:[
+      {nivel:"rc",nlabel:"Crítico",t:"Pipeline 100MW Maze: sin asegurar",d:"José Ramón debe aportar efectivamente los 100MW. Pierre como alternativa con ~150MW. Oferta esta semana."},
+      {nivel:"ra",nlabel:"Alto",t:"Primer cierre fundraising junio/julio: plazo muy ajustado",d:"Fundraising rolling recién planteado. Lista de ~12 potenciales. Jordi y Francesc como ancla inicial."},
+      {nivel:"rm",nlabel:"Medio",t:"CECO Maze + planta 5MW: 5 comités sin cierre",d:"Pierre ofrece alternativa vía planta 5MW (necesaria agosto). CECO sigue sin formalizar."},
+    ],
+    coherencia:[
+      {tag:"Nuevo ★",tc:"#fef9ee",tct:"#92400e",t:"Pipeline 100MW: nuevo punto crítico (12 may)",d:"Primer registro. José Ramón + Pierre como dos vías. Oferta esta semana."},
+      {tag:"Nuevo ★",tc:"#fef9ee",tct:"#92400e",t:"Fundraising rolling: primer cierre junio/julio",d:"Nuevo en 12 may. ~12 potenciales. Jordi y Francesc como primeros compromisos indicativos."},
+      {tag:"Avanza",tc:"#dcfce7",tct:"#166534",t:"Contrataciones: de 'wishlist' a cifras concretas",d:"Abel confirmado para septiembre con cifras. Primera persona en junio. Progresión desde 28 abr."},
+      {tag:"Sin cerrar",tc:"#fee2e2",tct:"#991b1b",t:"CECO Maze: 5 comités sin cierre",d:"Planteado 28 abr. Pierre ofrece alternativa pero CECO sigue sin formalizarse con Green Eagle."},
+    ]
+  },
+  inmoyield:{
+    name:"Inmoyield",sub:"Inversión inmobiliaria",color:"#78350f",
+    lastComite:"04 may 2026",numComites:1,
+    status:"Vigilar",statusColor:"#78350f",
+    resumen:"Riesgo concursal del deudor activo. Estrategia clara: no forzar vencimientos para mantener calificación como crédito contra la masa. Cap Negre cancelado con recuperación de ~536k€ que mejora liquidez. Decisión estratégica pendiente: modelo rolling vs SPV.",
+    tags:["No forzar vencimientos","Cap Negre 536k€","Rolling vs SPV","Riesgo concursal"],
+    hotTopics:[
+      {tipo:"critico",label:"Crítico",titulo:"No forzar vencimientos: riesgo de reclasificación",desc:"Si se fuerza el vencimiento anticipado, los créditos podrían reclasificarse como concursales (incluso subordinados), perdiendo la posición privilegiada como créditos contra la masa. Mantener la estructura actual es la única línea de defensa."},
+      {tipo:"importante",label:"Importante",titulo:"Definir modelo: rolling vs SPV",desc:"El modelo rolling (fondo existente con nuevos inversores) es preferido internamente por control, continuidad y escalabilidad. Los SPVs son más fáciles de vender pero generan salida del capital tras cada operación y menos control estratégico."},
+      {tipo:"nuevo",label:"Resuelto",titulo:"Cap Negre: ~536k€ recuperados",desc:"Cancelación definitiva por mala gestión del intermediario y falta de ejecución de Banco Santander. La recuperación de ~536k€ elimina la urgencia inmediata de financiación y mejora la liquidez a corto plazo."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Modelo rolling: palanca para escalar",desc:"El modelo rolling facilita la transición futura a un vehículo regulado y favorece la reinversión automática del inversor. Usar el vehículo con mayor duración restante para la ampliación de capital."},
+      {tipo:"importante",label:"Vigilar",titulo:"Necesidad estructural de capital persiste",desc:"A pesar de la mejora de liquidez por Cap Negre, siguen existiendo oportunidades que no se pueden ejecutar por falta de fondos. El modelo rolling es la vía para resolver esto de forma sistemática."},
+    ],
+    comites:[{f:"04 may 2026",t:"Reunión Inmoyield",ps:["Créditos no vencidos = créditos contra la masa (mejor posición de cobro)","No forzar vencimientos: riesgo de reclasificación como crédito concursal subordinado","Riesgo adicional: interpretación como préstamo participativo / cuenta en participación","Cap Negre cancelado definitivamente: mala gestión intermediario + Santander no ejecuta","Recuperación Cap Negre: ~536k€ + gastos + intereses → mejora liquidez inmediata","Necesidad estructural de capital persiste","Modelo rolling: preferido — control, continuidad, escalable","Modelo SPV: más fácil de vender pero menor control estratégico","Usar vehículo con mayor duración restante para la ampliación"],hs:["No forzar vencimientos — riesgo de reclasificación","Definir modelo rolling vs SPV: decisión estratégica clave"]}],
+    tareas:[
+      {t:"Mantener estructura sin forzar vencimientos",pr:"alta"},
+      {t:"Definir modelo prioritario de captación: rolling vs SPV",pr:"alta"},
+      {t:"Gestionar cobro Cap Negre: ~536k€ pendientes",pr:"alta"},
+      {t:"Seleccionar vehículo con mayor duración para ampliación",pr:"media"},
+      {t:"Hablar con inversores actuales sobre modelo rolling",pr:"media"},
+    ],
+    riesgos:[
+      {nivel:"ra",nlabel:"Alto",t:"Posible concurso del deudor",d:"No forzar vencimiento anticipado. Mantener calificación como crédito contra la masa."},
+      {nivel:"rm",nlabel:"Medio",t:"Riesgo interpretación como préstamo participativo",d:"Podría empeorar prelación en caso de concurso. Mantener estructura actual sin alteraciones."},
+    ],
+    coherencia:[
+      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Definir modelo rolling vs SPV",d:"Identificado en comité 4 may. Decisión estratégica pendiente. Preferencia interna: rolling."},
+      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Cobro Cap Negre ~536k€",d:"Cancelación confirmada. Gestionar recuperación efectiva de los fondos."},
+    ]
+  }
+};
+
+const companies=['cev','oberon','tradergy','medren','maze','inmoyield'];
+let activeCompany=null;
+const taskStates={};
+let currentTab='resumen';
+
+function buildLayout(){
+  const wrap=document.getElementById('nodes-layer');
+  wrap.innerHTML='';
+  const W=wrap.offsetWidth,H=wrap.offsetHeight;
+  const minD=Math.min(W,H);
+  const cx=W*.5,cy=H*.5;
+  const RC=minD*.24;
+
+  // SVG for lines only
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none';
+  wrap.appendChild(svg);
+
+  // center node
+  const cn=document.createElement('div');
+  cn.className='node node-center';
+  cn.style.cssText=`left:${cx}px;top:${cy}px`;
+  cn.innerHTML=`<div class="node-circle"><div class="node-label">Grupo<br>Empresarial</div><div class="node-sub">May 2026</div></div>`;
+  wrap.appendChild(cn);
+
+  companies.forEach((key,i)=>{
+    const d=DATA[key];
+    const angle=(i/companies.length)*2*Math.PI-Math.PI/2;
+    const px=cx+Math.cos(angle)*RC;
+    const py=cy+Math.sin(angle)*RC;
+
+    // spoke center → company
+    const spoke=document.createElementNS('http://www.w3.org/2000/svg','line');
+    spoke.setAttribute('x1',cx);spoke.setAttribute('y1',cy);
+    spoke.setAttribute('x2',px);spoke.setAttribute('y2',py);
+    spoke.setAttribute('stroke',d.color+'35');spoke.setAttribute('stroke-width','1.5');
+    svg.appendChild(spoke);
+
+    // company node
+    const alta=d.tareas.filter(t=>t.pr==='alta').length;
+    const div=document.createElement('div');
+    div.className='node node-company';
+    div.id='node-'+key;
+    div.style.cssText=`left:${px}px;top:${py}px`;
+    const shortName=key==='tradergy'?'Tradergy':key==='inmoyield'?'Inmoyield':key==='medren'?'MedREN':d.name.split(' ')[0];
+    div.innerHTML=`<div class="node-circle" style="border-color:${d.color};border-width:2px">
+      <div class="node-label" style="font-size:11px;color:${d.color}">${shortName}</div>
+      <div class="node-sub">${d.lastComite}</div>
+      <div class="node-badge" style="background:${d.color}">${alta}</div>
+    </div>`;
+    div.onclick=()=>openPanel(key);
+    wrap.appendChild(div);
+
+
+  });
+}
+
+function openPanel(key){
+  activeCompany=key;
+  document.getElementById('hint').style.display='none';
+  companies.forEach(k=>{const n=document.getElementById('node-'+k);if(n)n.classList.toggle('active',k===key)});
+  const d=DATA[key];
+  document.getElementById('panel-header').innerHTML=`
+    <button class="close-btn" onclick="closePanel()">✕</button>
+    <div class="panel-eyebrow">${d.sub}</div>
+    <div class="panel-title">${d.name}</div>
+    <span class="panel-pill" style="background:${d.statusColor}18;color:${d.statusColor};border:1px solid ${d.statusColor}40">${d.numComites} comité${d.numComites>1?'s':''} · último ${d.lastComite}</span>`;
+  document.getElementById('panel').classList.remove('closed');
+  document.getElementById('chat-resp').textContent='';
+  document.getElementById('chat-resp').classList.remove('on');
+  document.getElementById('chat-input').value='';
+  switchTab(currentTab);
+}
+
+function closePanel(){
+  document.getElementById('panel').classList.add('closed');
+  companies.forEach(k=>{const n=document.getElementById('node-'+k);if(n)n.classList.remove('active')});
+  document.getElementById('hint').style.display='block';
+  activeCompany=null;
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.panel-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  renderTab(tab);
+}
+
+function renderTab(tab){
+  if(!activeCompany)return;
+  const d=DATA[activeCompany];
+  const body=document.getElementById('panel-body');
+
+  if(tab==='resumen'){
+    // Last comite bullets
+    const last = d.comites[0];
+    let bulletHtml = '';
+    if(last.bloques){
+      bulletHtml = last.bloques.map(b=>
+        `<div style="margin-bottom:10px">
+          <span class="bloque-pill" style="background:${b.lc};color:${b.ltc}">${b.l}</span>
+          <ul class="resumen-bullets">${b.ps.slice(0,5).map(p=>`<li>${p}</li>`).join('')}</ul>
+          ${b.hs.length?`<div style="margin-top:6px">${b.hs.map(h=>`<div class="hot-li" style="font-size:11px">▲ ${h}</div>`).join('')}</div>`:''}
+        </div>`).join('');
+    } else {
+      bulletHtml = `<ul class="resumen-bullets">${last.ps.map(p=>`<li>${p}</li>`).join('')}</ul>
+        ${last.hs&&last.hs.length?`<div style="margin-top:8px">${last.hs.map(h=>`<div class="hot-li" style="font-size:11px">▲ ${h}</div>`).join('')}</div>`:''}`;
+    }
+    body.innerHTML=`
+      <div class="sec-title">Último comité · ${last.f}</div>
+      ${bulletHtml}
+      <hr class="div" style="margin:14px 0">
+      <div class="sec-title">Contexto general</div>
+      <p class="resumen-text">${d.resumen}</p>
+      <div class="tag-cloud">${d.tags.map(t=>`<span class="tag${t.includes('★')?' new':''}">${t}</span>`).join('')}</div>`;
+
+  }else if(tab==='hot'){
+    const tc={critico:'var(--danger)',importante:'var(--warn)',estrategico:'var(--purple)',nuevo:'var(--ok)'};
+    body.innerHTML=`<div class="sec-title">Temas de calado — pincha un comité para ver el detalle</div>`+
+      d.hotTopics.map(ht=>`<div class="hot-card ${ht.tipo}">
+        <div class="ht-label" style="color:${tc[ht.tipo]||'var(--muted)'}">${ht.label}</div>
+        <div class="ht-title">${ht.titulo}</div>
+        <div class="ht-desc">${ht.desc}</div>
+      </div>`).join('');
+
+  }else if(tab==='tareas'){
+    body.innerHTML=`<div class="sec-title">Tareas pendientes — pincha para marcar completada</div>`+
+      d.tareas.map((t,i)=>{
+        const sk=activeCompany+'_'+i,done=taskStates[sk];
+        const pc=t.pr==='alta'?'var(--danger)':t.pr==='media'?'var(--warn)':'var(--ok)';
+        return `<div class="task-item ${done?'done':''}" onclick="toggleTask('${activeCompany}',${i})">
+          <div class="task-prio" style="background:${pc}"></div>
+          <div class="task-check">${done?'✓':''}</div>
+          <div>
+            <div class="task-text">${t.t}${t.isNew?'<span class="new-chip">nuevo</span>':''}</div>
+            <div class="task-meta">${t.pr}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+  }else if(tab==='comites'){
+    body.innerHTML=`<div class="sec-title">Historial de comités</div>`+
+      d.comites.map((c,ci)=>{
+        let bhtml='';
+        if(c.bloques){
+          bhtml=c.bloques.map(b=>`<span class="bloque-pill" style="background:${b.lc};color:${b.ltc}">${b.l}</span>
+            <ul>${b.ps.map(p=>`<li>${p}</li>`).join('')}</ul>
+            ${b.hs.length?`<div class="comite-hot">${b.hs.map(h=>`<div class="hot-li">▲ ${h}</div>`).join('')}</div>`:''}`).join('<hr class="div">');
+        }else{
+          bhtml=`<ul>${c.ps.map(p=>`<li>${p}</li>`).join('')}</ul>
+            ${c.hs&&c.hs.length?`<div class="comite-hot">${c.hs.map(h=>`<div class="hot-li">▲ ${h}</div>`).join('')}</div>`:''}`;
+        }
+        return `<div class="comite-block${c.isNew?' latest':''}">
+          <div class="comite-head" onclick="tc(${ci})">
+            <div><div class="comite-fecha">${c.f}${c.isNew?' ★ Último':''}</div><div class="comite-tit">${c.t}</div></div>
+            <span class="comite-arr" id="ca-${ci}">▶</span>
+          </div>
+          <div class="comite-content" id="cb-${ci}">${bhtml}</div>
+        </div>`;
+      }).join('');
+
+  }else if(tab==='riesgos'){
+    const nc={rc:'var(--danger)',ra:'var(--warn)',rm:'var(--info)'};
+    body.innerHTML=`<div class="sec-title">Mapa de riesgos</div>`+
+      d.riesgos.map(r=>`<div class="risk-card ${r.nivel}">
+        <div class="risk-nivel" style="color:${nc[r.nivel]}">${r.nlabel}</div>
+        <div class="risk-title">${r.t}</div>
+        <div class="risk-desc">${r.d}</div>
+      </div>`).join('');
+
+  }else if(tab==='coherencia'){
+    body.innerHTML=`<div class="coh-explain">
+        <strong>¿Qué es coherencia?</strong> Cruce entre comités para detectar: temas que llevan varias sesiones sin resolverse, puntos donde el criterio ha cambiado entre comités, o asuntos mencionados una vez que nunca tuvieron continuidad. Es la memoria entre sesiones.
+      </div>`+
+      d.coherencia.map(c=>`<div class="coh-card">
+        <div class="coh-head">
+          <span class="coh-pill" style="background:${c.tc};color:${c.tct}">${c.tag}</span>
+          <span class="coh-tit">${c.t}</span>
+        </div>
+        <div class="coh-desc">${c.d}</div>
+      </div>`).join('');
+  }
+}
+
+function toggleTask(key,i){
+  taskStates[key+'_'+i]=!taskStates[key+'_'+i];
+  renderTab('tareas');
+  let total=0;
+  companies.forEach(k=>DATA[k].tareas.forEach((_,j)=>{if(!taskStates[k+'_'+j])total++}));
+  document.getElementById('pending-count').textContent=total;
+}
+
+function tc(ci){
+  document.getElementById('cb-'+ci).classList.toggle('open');
+  document.getElementById('ca-'+ci).classList.toggle('open');
+}
+
+// CHAT
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}}
+
+async function sendChat(){
+  if(!activeCompany)return;
+  const inp=document.getElementById('chat-input');
+  const q=inp.value.trim();
+  if(!q)return;
+  const d=DATA[activeCompany];
+  const btn=document.getElementById('chat-btn');
+  const resp=document.getElementById('chat-resp');
+  btn.disabled=true;
+  inp.value='';
+  resp.classList.add('on');
+  resp.innerHTML='<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+  const ctx=`Eres un asistente ejecutivo experto. Tienes información sobre la empresa ${d.name} (${d.sub}).
+
+RESUMEN: ${d.resumen}
+
+HOT TOPICS ACTUALES: ${d.hotTopics.map(h=>`• ${h.titulo}: ${h.desc}`).join('\n')}
+
+TAREAS DE ALTA PRIORIDAD: ${d.tareas.filter(t=>t.pr==='alta').map(t=>t.t).join('; ')}
+
+COHERENCIA ENTRE COMITÉS: ${d.coherencia.map(c=>`[${c.tag}] ${c.t}: ${c.d}`).join(' | ')}
+
+ÚLTIMO COMITÉ: ${d.lastComite}
+
+Responde en español, de forma concisa y directa (máximo 150 palabras). Sin preamble. Ve al punto.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:350,
+        system:ctx,
+        messages:[{role:'user',content:q}]
+      })
+    });
+    const data=await res.json();
+    resp.textContent=data.content?.[0]?.text||'Sin respuesta.';
+  }catch(e){
+    resp.textContent='Error de conexión. Inténtalo de nuevo.';
+  }
+  btn.disabled=false;
+}
+
+document.querySelectorAll('.panel-tab').forEach(btn=>{
+  btn.addEventListener('click',function(){switchTab(this.dataset.tab)});
+});
+
+window.addEventListener('resize',buildLayout);
+buildLayout();
+</script>
+</body>
+</html>
