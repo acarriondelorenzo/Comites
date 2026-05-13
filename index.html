@@ -43,6 +43,85 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 
 .hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted2);letter-spacing:.06em;pointer-events:none;text-transform:uppercase}
 
+/* GLOBAL SEARCH */
+.global-search{
+  position:absolute;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(560px,80%);
+  z-index:20;
+}
+.gs-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:28px;
+  padding:8px 8px 8px 18px;
+  box-shadow:var(--shadow-lg);
+  transition:box-shadow .2s,border-color .2s;
+}
+.gs-row:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 2px 12px rgba(139,105,20,.12),0 8px 32px rgba(0,0,0,.06);
+}
+.gs-input{
+  flex:1;
+  border:none;
+  outline:none;
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+  background:transparent;
+  color:var(--text);
+  min-width:0;
+}
+.gs-input::placeholder{color:var(--muted2)}
+.gs-btn{
+  background:var(--accent);
+  border:none;
+  border-radius:20px;
+  color:white;
+  cursor:pointer;
+  padding:6px 16px;
+  font-size:12px;
+  font-family:'Inter',sans-serif;
+  font-weight:500;
+  white-space:nowrap;
+  transition:opacity .15s;
+  flex-shrink:0;
+}
+.gs-btn:hover{opacity:.85}
+.gs-btn:disabled{opacity:.4;cursor:not-allowed}
+.gs-answer{
+  margin-top:8px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 18px;
+  font-size:12px;
+  color:var(--text);
+  line-height:1.7;
+  box-shadow:var(--shadow-lg);
+  display:none;
+  max-height:220px;
+  overflow-y:auto;
+  position:relative;
+}
+.gs-answer.on{display:block}
+.gs-answer::-webkit-scrollbar{width:3px}
+.gs-answer::-webkit-scrollbar-thumb{background:var(--border2)}
+.gs-close{
+  position:absolute;
+  top:10px;right:12px;
+  background:transparent;border:none;
+  color:var(--muted2);cursor:pointer;
+  font-size:14px;line-height:1;
+}
+.gs-close:hover{color:var(--text)}
+.gs-thinking{display:flex;gap:4px;align-items:center;padding:2px 0}
+
 /* PANEL */
 .panel{width:400px;min-width:400px;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease;box-shadow:-2px 0 12px rgba(0,0,0,.04)}
 .panel.closed{width:0;min-width:0;border-left:none;box-shadow:none}
@@ -152,6 +231,18 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
 </div>
 <div class="layout">
   <div class="canvas-wrap" id="canvas-wrap">
+    <div class="global-search" id="global-search">
+      <div class="gs-row">
+        <input class="gs-input" id="gs-input" type="text"
+          placeholder="Pregunta sobre cualquier empresa o comité… ej: ¿De qué se habló sobre fundraising en Maze?"
+          onkeydown="if(event.key==='Enter')gsAsk()">
+        <button class="gs-btn" id="gs-btn" onclick="gsAsk()">Preguntar</button>
+      </div>
+      <div class="gs-answer" id="gs-answer">
+        <button class="gs-close" onclick="gsClose()">✕</button>
+        <div id="gs-content"></div>
+      </div>
+    </div>
     <div class="nodes-layer" id="nodes-layer"></div>
     <div class="hint" id="hint">Pincha una empresa para explorar</div>
   </div>
@@ -709,6 +800,61 @@ document.querySelectorAll('.panel-tab').forEach(btn=>{
 
 window.addEventListener('resize',buildLayout);
 buildLayout();
+
+// GLOBAL SEARCH
+function gsClose(){
+  document.getElementById('gs-answer').classList.remove('on');
+  document.getElementById('gs-content').innerHTML='';
+}
+
+async function gsAsk(){
+  const inp = document.getElementById('gs-input');
+  const q = inp.value.trim();
+  if(!q) return;
+  const btn = document.getElementById('gs-btn');
+  const ans = document.getElementById('gs-answer');
+  const cont = document.getElementById('gs-content');
+  btn.disabled = true;
+  ans.classList.add('on');
+  cont.innerHTML = '<div class="gs-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+  // Build full context from all companies
+  const ctx = companies.map(key => {
+    const d = DATA[key];
+    const comitesText = d.comites.map(c => {
+      const ps = c.bloques ? c.bloques.flatMap(b=>b.ps) : (c.ps||[]);
+      const hs = c.bloques ? c.bloques.flatMap(b=>b.hs||[]) : (c.hs||[]);
+      return `[${c.f}] ${c.t}: ${ps.join('; ')}${hs.length?' | CALIENTES: '+hs.join('; '):''}`;
+    }).join('\n');
+    const hts = d.hotTopics.map(h=>`${h.titulo}: ${h.desc}`).join(' | ');
+    return `=== ${d.name} (${d.sub}) ===\nResumen: ${d.resumen}\nHot Topics: ${hts}\nComités:\n${comitesText}`;
+  }).join('\n\n');
+
+  const system = `Eres un asistente ejecutivo con acceso completo a las actas y resúmenes de todos los comités del grupo empresarial CEV-Oberon. A continuación tienes toda la información disponible:
+
+${ctx}
+
+Responde en español, de forma concisa y ejecutiva. Cita la empresa y fecha del comité cuando sea relevante. Máximo 200 palabras. Sin preamble, ve directo al punto.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        system,
+        messages:[{role:'user',content:q}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Sin respuesta.';
+    cont.innerHTML = text.replace(/\n/g,'<br>');
+  } catch(e) {
+    cont.innerHTML = 'Error de conexión. Inténtalo de nuevo.';
+  }
+  btn.disabled = false;
+}
 </script>
 </body>
 </html>
