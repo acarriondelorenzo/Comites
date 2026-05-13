@@ -143,11 +143,11 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
 <div class="topbar">
   <div class="topbar-title">Comités · Seguimiento Ejecutivo</div>
   <div class="topbar-meta">
-    <div class="meta-item"><div class="meta-num">12</div><div class="meta-label">Comités</div></div>
+    <div class="meta-item"><div class="meta-num">13</div><div class="meta-label">Comités</div></div>
     <div class="meta-item"><div class="meta-num">6</div><div class="meta-label">Empresas</div></div>
-    <div class="meta-item"><div class="meta-num" id="pending-count">58</div><div class="meta-label">Tareas</div></div>
+    <div class="meta-item"><div class="meta-num" id="pending-count">66</div><div class="meta-label">Tareas</div></div>
     <div class="meta-item"><div class="meta-num" style="color:var(--danger)">6</div><div class="meta-label">Críticos</div></div>
-    <div class="meta-item"><div class="meta-num" style="color:var(--accent)">12 may</div><div class="meta-label">Actualizado</div></div>
+    <div class="meta-item"><div class="meta-num" style="color:var(--accent)">13 may</div><div class="meta-label">Actualizado</div></div>
   </div>
 </div>
 <div class="layout">
@@ -398,32 +398,61 @@ const DATA={
   },
   inmoyield:{
     name:"Inmoyield",sub:"Inversión inmobiliaria",color:"#78350f",
-    lastComite:"04 may 2026",numComites:1,
+    lastComite:"12 may 2026",numComites:2,
     status:"Vigilar",statusColor:"#78350f",
-    resumen:"Riesgo concursal del deudor activo. Estrategia clara: no forzar vencimientos para mantener calificación como crédito contra la masa. Cap Negre cancelado con recuperación de ~536k€ que mejora liquidez. Decisión estratégica pendiente: modelo rolling vs SPV.",
-    tags:["No forzar vencimientos","Cap Negre 536k€","Rolling vs SPV","Riesgo concursal"],
+    resumen:"Modelo rolling aprobado para entrada de nuevo capital (umbral ~13,3% para no perjudicar a inversores antiguos). Tres oportunidades en análisis: Teruel (más avanzada, oferta próxima), Favara Valencia y Castellón playa (en pausa). Hay más oportunidades que capital — preparar paquete para levantar 2–5M€. Vehículo regulado con Proaltus a ~12 meses vista.",
+    tags:["Modelo rolling aprobado","Teruel oferta próxima","2–5M€ capital","Favara Valencia","Castellón en pausa","12 may ★"],
     hotTopics:[
-      {tipo:"critico",label:"Crítico",titulo:"No forzar vencimientos: riesgo de reclasificación",desc:"Si se fuerza el vencimiento anticipado, los créditos podrían reclasificarse como concursales (incluso subordinados), perdiendo la posición privilegiada como créditos contra la masa. Mantener la estructura actual es la única línea de defensa."},
-      {tipo:"importante",label:"Importante",titulo:"Definir modelo: rolling vs SPV",desc:"El modelo rolling (fondo existente con nuevos inversores) es preferido internamente por control, continuidad y escalabilidad. Los SPVs son más fáciles de vender pero generan salida del capital tras cada operación y menos control estratégico."},
-      {tipo:"nuevo",label:"Resuelto",titulo:"Cap Negre: ~536k€ recuperados",desc:"Cancelación definitiva por mala gestión del intermediario y falta de ejecución de Banco Santander. La recuperación de ~536k€ elimina la urgencia inmediata de financiación y mejora la liquidez a corto plazo."},
-      {tipo:"estrategico",label:"Estratégico",titulo:"Modelo rolling: palanca para escalar",desc:"El modelo rolling facilita la transición futura a un vehículo regulado y favorece la reinversión automática del inversor. Usar el vehículo con mayor duración restante para la ampliación de capital."},
-      {tipo:"importante",label:"Vigilar",titulo:"Necesidad estructural de capital persiste",desc:"A pesar de la mejora de liquidez por Cap Negre, siguen existiendo oportunidades que no se pueden ejecutar por falta de fondos. El modelo rolling es la vía para resolver esto de forma sistemática."},
+      {tipo:"nuevo",label:"Aprobado",titulo:"Modelo rolling: umbral 13,3% para no perjudicar a inversores antiguos",desc:"Entrada de nuevo capital separando beneficio antes/después de fecha de corte. Inversores antiguos conservan 100% del beneficio previo. Por encima del 13,3% de rentabilidad del nuevo capital, la entrada es positiva o neutra. Ventanas trimestrales o semestrales para reducir complejidad."},
+      {tipo:"critico",label:"Próximo paso",titulo:"Teruel: oferta inminente",desc:"14–15 viviendas, inversión total ~727k€, precio de compra ~60k€/vivienda con alquiler potencial ~700€/mes. Rentabilidad defensiva muy atractiva si se confirma demanda. Es la oportunidad más avanzada — revisar detalle y presentar oferta."},
+      {tipo:"importante",label:"Importante",titulo:"Levantar 2–5M€: hay motor pero falta gasolina",desc:"Inmoyield tiene más oportunidades que capital. Preparar paquete de oportunidades priorizadas para justificar entrada de capital. Comunicación a inversores actuales con prioridad de entrada antes de abrir a terceros."},
+      {tipo:"importante",label:"Revisar",titulo:"Castellón/playa: en pausa hasta revisar números",desc:"6 pareados al 80% de ejecución con buen aspecto pero problema de línea de baja tensión y catastro. Los números no quedaron claros en la reunión. En pausa hasta revisar hoja económica completa."},
+      {tipo:"estrategico",label:"Estratégico",titulo:"Vehículo regulado (Proaltus): a 12 meses vista",desc:"Necesario para crecer de verdad sin cruzar la línea de comercialización no regulada. Zona gris regulatoria actual. Proaltus como gestora posible. No depender de esto para operaciones inmediatas — seguir con círculo de confianza actual mientras tanto."},
     ],
-    comites:[{f:"04 may 2026",t:"Reunión Inmoyield",ps:["Créditos no vencidos = créditos contra la masa (mejor posición de cobro)","No forzar vencimientos: riesgo de reclasificación como crédito concursal subordinado","Riesgo adicional: interpretación como préstamo participativo / cuenta en participación","Cap Negre cancelado definitivamente: mala gestión intermediario + Santander no ejecuta","Recuperación Cap Negre: ~536k€ + gastos + intereses → mejora liquidez inmediata","Necesidad estructural de capital persiste","Modelo rolling: preferido — control, continuidad, escalable","Modelo SPV: más fácil de vender pero menor control estratégico","Usar vehículo con mayor duración restante para la ampliación"],hs:["No forzar vencimientos — riesgo de reclasificación","Definir modelo rolling vs SPV: decisión estratégica clave"]}],
+    comites:[
+      {f:"12 may 2026",t:"Comité Inmoyield",isNew:true,ps:[
+        "Viviendas ocupadas: visitas con enfoque negociador (coordinado con Gonzalo) — proponer compra o compensación para salida voluntaria, vía judicial solo si no hay acuerdo",
+        "Modelo rolling aprobado: entrada de nuevo capital separando beneficio antes/después de fecha de corte — antiguos inversores conservan 100% del beneficio previo",
+        "Umbral de rentabilidad mínima del nuevo capital para no perjudicar a inversores antiguos: ~13,3% — por encima, la entrada es positiva o neutra",
+        "Ventanas de entrada trimestrales o semestrales (no continuas) para reducir complejidad",
+        "Comunicación a inversores actuales: prioridad de entrada antes de abrir a terceros; algunos podrían querer ampliar posición",
+        "Hay más oportunidades que capital: 'hay motor, pero falta gasolina' — preparar paquete de oportunidades para justificar entrada de 2–5M€",
+        "Favara (Valencia): 7 viviendas, precio negociado 225k€, obra atrasada, rentabilidad atractiva — revisar comunidad, séptima vivienda y obra pendiente",
+        "Teruel: 14–15 viviendas, ~593k€ compra, inversión total ~727k€, precio venta ~100–115k€/viv, compra a ~60k€/viv con alquiler potencial ~700€/mes — oportunidad avanzada, oferta próxima",
+        "Castellón/playa: 6 pareados al 80% ejecución, problema línea baja tensión y catastro — en pausa hasta revisar hoja económica",
+        "Criterio estratégico: preferir compra directa sobre canales (lección Chani) — más control si algo sale mal",
+        "Vehículo regulado (Proaltus): deseable pero no inmediato, estimado ~12 meses — no depender de ello para operaciones inmediatas",
+      ],hs:[
+        "Teruel: revisar detalle y presentar oferta si se confirma tesis",
+        "Castellón: revisar números antes de decidir si se avanza o descarta",
+        "Modelo rolling: preparar versión depurada con sensibilidades y escenarios",
+        "Comunicación a inversores actuales: estructurar mensaje de entrada de capital",
+      ]},
+      {f:"04 may 2026",t:"Reunión Inmoyield",ps:["Créditos no vencidos = créditos contra la masa (mejor posición de cobro)","No forzar vencimientos: riesgo de reclasificación como crédito concursal subordinado","Riesgo adicional: interpretación como préstamo participativo / cuenta en participación","Cap Negre cancelado definitivamente: mala gestión intermediario + Santander no ejecuta","Recuperación Cap Negre: ~536k€ + gastos + intereses → mejora liquidez inmediata","Necesidad estructural de capital persiste","Modelo rolling: preferido — control, continuidad, escalable","Modelo SPV: más fácil de vender pero menor control estratégico","Usar vehículo con mayor duración restante para la ampliación"],hs:["No forzar vencimientos — riesgo de reclasificación","Definir modelo rolling vs SPV: decisión estratégica clave"]}
+    ],
     tareas:[
-      {t:"Mantener estructura sin forzar vencimientos",pr:"alta"},
-      {t:"Definir modelo prioritario de captación: rolling vs SPV",pr:"alta"},
+      {t:"Revisar detalle oportunidad Teruel y presentar oferta si se confirma tesis",pr:"alta",isNew:true},
+      {t:"Preparar versión depurada del modelo rolling con sensibilidades y escenarios",pr:"alta",isNew:true},
+      {t:"Estructurar comunicación a inversores actuales: modelo entrada, protección beneficio previo, opción de ampliar posición",pr:"alta",isNew:true},
+      {t:"Seleccionar oportunidades prioritarias para justificar entrada de capital 2–5M€",pr:"alta",isNew:true},
+      {t:"Revisar números de Castellón/playa antes de decidir si se avanza o descarta",pr:"media",isNew:true},
+      {t:"Visitas a viviendas ocupadas con Gonzalo: proponer compra o compensación",pr:"media",isNew:true},
+      {t:"Revisar Favara Valencia: comunidad, séptima vivienda, obra pendiente y negociación final",pr:"media",isNew:true},
+      {t:"Mantener análisis vehículo regulado con Proaltus en paralelo (sin urgencia)",pr:"baja",isNew:true},
+      {t:"Mantener estructura sin forzar vencimientos (cartera anterior)",pr:"alta"},
       {t:"Gestionar cobro Cap Negre: ~536k€ pendientes",pr:"alta"},
-      {t:"Seleccionar vehículo con mayor duración para ampliación",pr:"media"},
-      {t:"Hablar con inversores actuales sobre modelo rolling",pr:"media"},
     ],
     riesgos:[
-      {nivel:"ra",nlabel:"Alto",t:"Posible concurso del deudor",d:"No forzar vencimiento anticipado. Mantener calificación como crédito contra la masa."},
-      {nivel:"rm",nlabel:"Medio",t:"Riesgo interpretación como préstamo participativo",d:"Podría empeorar prelación en caso de concurso. Mantener estructura actual sin alteraciones."},
+      {nivel:"ra",nlabel:"Alto",t:"Posible concurso del deudor (cartera anterior)",d:"No forzar vencimiento anticipado. Mantener calificación como crédito contra la masa."},
+      {nivel:"ra",nlabel:"Alto",t:"Zona gris regulatoria en captación de capital",d:"Elementos favorables (grupo cerrado, actas, comités reales) pero riesgo si se interpreta como captación recurrente de terceros. Operar con círculo de confianza hasta tener vehículo regulado."},
+      {nivel:"ra",nlabel:"Alto",t:"Teruel: deterioro por abandono puede encarecer CAPEX",d:"Suciedad, palomas, cubiertas, humedades y remates interiores. Revisar bien el coste de obra antes de confirmar la tesis de rentabilidad."},
+      {nivel:"rm",nlabel:"Medio",t:"Castellón/playa: números sin confirmar",d:"Línea de baja tensión y posible afección catastral. Rentabilidad no clara con los datos actuales. En pausa hasta revisar hoja económica."},
     ],
     coherencia:[
-      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Definir modelo rolling vs SPV",d:"Identificado en comité 4 may. Decisión estratégica pendiente. Preferencia interna: rolling."},
-      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Cobro Cap Negre ~536k€",d:"Cancelación confirmada. Gestionar recuperación efectiva de los fondos."},
+      {tag:"Resuelto",tc:"#dcfce7",tct:"#166534",t:"Modelo rolling: de debate a aprobado",d:"En comité 4 may era preferencia interna. El 12 may se presenta, analiza y aprueba con umbral concreto del 13,3%. Progresión completa."},
+      {tag:"Nuevo ★",tc:"#fef9ee",tct:"#92400e",t:"Tres oportunidades inmobiliarias en análisis",d:"Teruel (avanzada), Favara Valencia (interesante con revisión pendiente), Castellón/playa (en pausa). Primera vez que aparecen oportunidades concretas en los comités."},
+      {tag:"En progreso",tc:"#fef3c7",tct:"#92400e",t:"Cobro Cap Negre ~536k€",d:"Cancelación confirmada (4 may). Gestionar recuperación efectiva de los fondos."},
+      {tag:"Vigilar",tc:"#eff6ff",tct:"#1d4ed8",t:"Zona gris regulatoria: sin vehículo regulado",d:"Identificada en 12 may. Proaltus como opción a ~12 meses. Operar con prudencia mientras tanto."},
     ]
   }
 };
